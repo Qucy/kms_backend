@@ -4,12 +4,17 @@ from rest_framework import status, viewsets
 from .serializers import ImageSerializer, TagSerializer, ImageTagLinkageSerializer
 from .models import Image, Tag, ImageTagLinkage
 
+
 class ImageView(viewsets.ModelViewSet):
+    """ View for image module
+    """
     serializer_class = ImageSerializer
     queryset = Image.objects.all()
 
 
 class TagView(viewsets.ModelViewSet):
+    """ View for image tag module
+    """
     serializer_class = TagSerializer
     queryset = Tag.objects.all()
 
@@ -48,10 +53,9 @@ class TagView(viewsets.ModelViewSet):
         else:
             return super().create(request, *args, **kwargs)
 
-    
-    
-
 
 class ImageTagLinkView(viewsets.ModelViewSet):
+    """ View for image tag linkage module
+    """
     serializer_class = ImageTagLinkageSerializer
     queryset = ImageTagLinkage.objects.all()
