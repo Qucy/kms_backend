@@ -5,7 +5,7 @@ class Image(models.Model):
     """
     Image model to store image meta data
     """
-    image_namme = models.CharField(max_length=50)
+    image_name = models.CharField(max_length=50)
     image_type = models.CharField(max_length=20)
     image_size = models.PositiveBigIntegerField(default=0)
     image_width = models.PositiveBigIntegerField(default=0)
@@ -19,12 +19,12 @@ class Image(models.Model):
     class Meta:
 
         constraints = [
-            models.UniqueConstraint(fields=['image_namme'], name='image name unique constraint'),
+            models.UniqueConstraint(fields=['image_name'], name='image name unique constraint'),
         ]
 
 
     def __str__(self) -> str:
-        return self.image_namme
+        return self.image_name
 
 
 class Tag(models.Model):
