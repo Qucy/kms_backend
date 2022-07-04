@@ -28,7 +28,7 @@ class Image(models.Model):
 
 
 class Tag(models.Model):
-    """ Tag model mapping to tag table to store t
+    """ Tag model to store image taggings
     """
     tag_name = models.CharField(max_length=200)
     tag_category = models.CharField(max_length=50)
@@ -46,6 +46,8 @@ class Tag(models.Model):
 
 
 class ImageTagLinkage(models.Model):
+    """ Linkage table to store image and tag mappings
+    """
     image_id = models.IntegerField()
     tag_id = models.IntegerField()
     create_by = models.CharField(max_length=10)

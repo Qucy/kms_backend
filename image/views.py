@@ -31,12 +31,9 @@ class TagView(viewsets.ModelViewSet):
 
         # pagnation
         page = self.paginate_queryset(queryset)
-        #if page is not None:
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
-        #else:
-            
-            #return Response({'message': 'List query failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     def create(self, request, *args, **kwargs):
         """ override create function
