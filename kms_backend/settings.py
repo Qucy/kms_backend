@@ -86,9 +86,9 @@ REST_FRAMEWORK = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql_psycopg2',
 #         'NAME': 'postgres',
-#         'USER': 'postgres',
-#         "PASSWORD" : 'HowSimpleBecomeComplicated',
-#         "HOST": '35.220.149.136',
+#         'USER': '',
+#         "PASSWORD" : '',
+#         "HOST": '',
 #         'PORT': 5432,
 #         'OPTIONS': {
 #             'options': '-c search_path=kms'
