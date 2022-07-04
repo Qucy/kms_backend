@@ -41,8 +41,8 @@ The reason why I choose Django as our web backend project is because this a POC 
 
 API endpoint for development -> http://127.0.0.1:8000/api/
 
-![api_summary](D:\React\kms_backend\api_summary.jpg)
+![api_summary](https://github.com/Qucy/kms_backend/blob/master/api_summary.jpg)
 
-![image_tag_api_list](D:\React\kms_backend\image_tag_api_list.jpg)
+![image_tag_api_list](https://github.com/Qucy/kms_backend/blob/master/image_tag_api_list.jpg)
 
-![image_tag_api_add](D:\React\kms_backend\image_tag_api_add.jpg)
+![image_tag_api_add](https://github.com/Qucy/kms_backend/blob/master/image_tag_api_add.jpg)
