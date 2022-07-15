@@ -23,6 +23,7 @@ class ImageView(viewsets.ModelViewSet):
         
         image_name = self.request.query_params.get('image_name')
         image_type = self.request.query_params.get('image_type')
+        create_by = self.request.query_params.get('create_by')
 
         queryset = Image.objects.all()
 
