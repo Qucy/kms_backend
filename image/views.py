@@ -7,6 +7,8 @@ from .models import Image, Tag, ImageTagLinkage
 from PIL import Image as PILImage
 import io
 import os
+import base64
+
 
 
 class ImageView(viewsets.ModelViewSet):
@@ -42,12 +44,21 @@ class ImageView(viewsets.ModelViewSet):
         # pagnation
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
+
+        serializer = self.get_serializer(page, many=True)
+
+        # Converting the image path into images
+        for record in serializer.data:
+            image_path = record['image_url']
+            img = PILImage.open(image_path)
+            buf = io.BytesIO()
+            img.save(buf, format='JPEG')
+            byte_im = base64.b64encode(buf.getvalue())
+            record['img'] = byte_im
+
         return self.get_paginated_response(serializer.data)
 
     def create(self, request, *args, **kwargs):
-        # TODO 1: Save image as file (DONE)
-        # TODO 2: Extract metadat and save into the bq (DONE)
-        # TODO 3: Think batch upload 
 
         # Extract image payload
         image = request.data['file']
@@ -56,7 +67,6 @@ class ImageView(viewsets.ModelViewSet):
 
         # Process the image
         image_file_io = io.BytesIO(image.file.read())
-        image_size = image_file_io.tell()
         image_file = PILImage.open(image_file_io)
 
         # Saving image to the static file
