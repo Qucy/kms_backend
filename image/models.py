@@ -7,7 +7,7 @@ class Image(models.Model):
     """
     image_name = models.CharField(max_length=50)
     image_type = models.CharField(max_length=20)
-    image_size = models.PositiveBigIntegerField(default=0)
+    image_size = models.CharField(max_length=20)
     image_width = models.PositiveBigIntegerField(default=0)
     image_height = models.PositiveBigIntegerField(default=0)
     image_url = models.CharField(max_length=200)
