@@ -45,7 +45,6 @@ class ImageView(viewsets.ModelViewSet):
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
 
-        serializer = self.get_serializer(page, many=True)
 
         # Converting the image path into images
         for record in serializer.data:
@@ -63,7 +62,7 @@ class ImageView(viewsets.ModelViewSet):
         # Extract image payload
         image = request.data['file']
         image_name = request.data['image_name']
-        create_by = request.data['created_by']
+        create_by = request.data['create_by']
 
         # Process the image
         image_file_io = io.BytesIO(image.file.read())
@@ -72,7 +71,7 @@ class ImageView(viewsets.ModelViewSet):
         # Saving image to the static file
         image_path = 'static/' + str(image)
         image_file.save(image_path)
-        image_size = os.path.getsize(image_path)
+        image_size = str(os.path.getsize(image_path)/1024) + ' KB'
 
         # Saving the image meta data
         image_width, image_height = image_file.size
