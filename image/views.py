@@ -55,22 +55,17 @@ class TagView(viewsets.ModelViewSet):
         else:
             return super().create(request, *args, **kwargs)
 
-    def destory(self, request, *args, **kwargs):
-        """override destory function"""
+    def destroy(self, request, *args, **kwargs):
+        """override destroy function"""
 
         # delete tag
         tag = self.get_object()
-        tag.delete()
+        self.perform_destroy(tag)
 
-        # return updated query set
-        queryset = Tag.objects.all()
+        # return deleted tag
+        serializer = TagSerializer(tag)
 
-        # pagnation
-        page = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(page, many=True)
-        return self.get_paginated_response(serializer.data)
-
-        # return Response({"message": "tag deleted"}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ImageTagLinkView(viewsets.ModelViewSet):
