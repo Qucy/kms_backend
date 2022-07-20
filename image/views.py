@@ -147,9 +147,12 @@ class TagView(viewsets.ModelViewSet):
 
         # delete tag
         tag = self.get_object()
-        tag.delete()
+        self.perform_destroy(tag)
 
-        return Response({"message": "tag deleted"}, status=status.HTTP_200_OK)
+        # return deleted tag
+        serializer = TagSerializer(tag)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ImageTagLinkView(viewsets.ModelViewSet):
