@@ -51,7 +51,13 @@ class ImageView(viewsets.ModelViewSet):
             image_path = record["image_url"]
             img = PILImage.open(image_path)
             buf = io.BytesIO()
-            img.save(buf, format="JPEG")
+            if record['image_type'].lower() in ('jpg', 'jpeg'):
+                img.save(buf, format='JPEG')
+            elif record['image_type'].lower() == 'png':
+                img.save(buf, format='PNG')
+            else:
+                print(f'Unsupport type {image_type}')
+                
             byte_im = base64.b64encode(buf.getvalue())
             record["img"] = byte_im
 
