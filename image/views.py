@@ -114,7 +114,7 @@ class TagView(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
 
     def list(self, request, *args, **kwargs):
-        """over ride list function"""
+        """override list function"""
         # retrieve parameter query
         tag_name = self.request.query_params.get("tag_name")
         tag_category = self.request.query_params.get("tag_category")
@@ -162,20 +162,7 @@ class TagView(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], name="All tags")
     def all_tags(self, request, *args, **kwargs):
-
-        # retrieve parameter query
-        tag_name = self.request.query_params.get("tag_name")
-        tag_category = self.request.query_params.get("tag_category")
         queryset = Tag.objects.all()
-
-        # if tag name is passed
-        if tag_name is not None and tag_name != "":
-            queryset = queryset.filter(tag_name__containers=tag_name)
-
-        # if tag category is passed
-        if tag_category is not None and tag_category != "":
-            queryset = queryset.filter(tag_category__contains=tag_category)
-
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
