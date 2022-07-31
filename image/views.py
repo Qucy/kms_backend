@@ -1,15 +1,15 @@
-from django.http import Http404
+import io
+import os
+import base64
+from PIL import Image as PILImage
+
+from django.http import Http404, FileResponse
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from .serializers import ImageSerializer, TagSerializer, ImageTagLinkageSerializer
 from .models import Image, Tag, ImageTagLinkage
-
-from PIL import Image as PILImage
-import io
-import os
-import base64
 
 
 class ImageView(viewsets.ModelViewSet):
@@ -105,6 +105,43 @@ class ImageView(viewsets.ModelViewSet):
                 {"message": f"Image name [{image_name}] created"},
                 status=status.HTTP_200_OK,
             )
+
+    @action(detail=False, methods=["get"], name="Download image")
+    def download(self, request, *args, **kwargs):
+        """ Given the image url download image from local server
+            by assign Cotent-Disposition to http header
+            https://github.com/eligrey/FileSaver.js/wiki/Saving-a-remote-file#using-http-header
+        """
+        # retrieve image url
+        image_url = self.request.query_params.get("image_url")
+        image_name = self.request.query_params.get("image_namme")
+
+        if image_url is not None and image_url != '':
+
+            if os.path.isfile(image_url):
+                # open the file
+                f = open(image_url, 'rb')
+                # file size in bytes
+                size = os.path.getsize(image_url)
+                # retrieve image name from path
+                if image_name is None or image_name == '':
+                    image_name = image_url.split('/')[-1]
+                # send file
+                response = FileResponse(f, content_type='application/octet-stream; charset=utf-8')
+                response['Content-Length'] = size
+                response['Content-Disposition'] = f'attachment; filename="{image_name}"; filename*="{image_name}"'
+                return response
+            else:
+                return Response(
+                {"message": f"Image {image_url} is not exist!"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            return Response(
+                {"message": f"Parameter image_url can not be empty!"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
 
 
 class TagView(viewsets.ModelViewSet):
