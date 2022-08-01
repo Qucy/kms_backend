@@ -10,6 +10,7 @@ from PIL import Image as PILImage
 import io
 import os
 import base64
+import ast
 
 
 class ImageView(viewsets.ModelViewSet):
@@ -91,7 +92,7 @@ class ImageView(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         else:
-            Image(
+            image = Image(
                 image_name=image_name,
                 image_type=image_type,
                 image_size=image_size,
@@ -100,9 +101,10 @@ class ImageView(viewsets.ModelViewSet):
                 image_url=image_path,
                 image_desc=image_path,
                 create_by=create_by,
-            ).save()
+            )
+            image.save()
             return Response(
-                {"message": f"Image name [{image_name}] created"},
+                {"message": f"Image name [{image_name}] created", "image_id" : image.id},
                 status=status.HTTP_200_OK,
             )
 
@@ -172,3 +174,46 @@ class ImageTagLinkView(viewsets.ModelViewSet):
 
     serializer_class = ImageTagLinkageSerializer
     queryset = ImageTagLinkage.objects.all()
+
+    def list(self, request, *args, **kwargs):
+
+        # retrieve parameter query
+        tag_id = self.request.query_params.get("tag_id")
+        image_ids = self.request.query_params.get("image_ids")
+
+        queryset = ImageTagLinkage.objects.all()
+
+        # if tag name is passed
+        if tag_id is not None and tag_id != "":
+            queryset = queryset.filter(tag_id__exact=tag_id)
+
+        # if tag categroy is passed
+        if image_ids is not None and image_ids != "":
+            image_ids = ast.literal_eval(image_ids)
+            queryset = queryset.filter(image_id__in=image_ids)
+
+        serializer = self.get_serializer(queryset, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    def create(self, request, *args, **kwargs):
+        tag_ids = request.data["tag_ids"]
+        image_id = request.data["image_id"]
+        create_by = request.data["create_by"]
+        creation_datetime = request.data["creation_datetime"]
+
+        for tag_id in tag_ids:
+            link = ImageTagLinkage(
+                image_id = image_id,
+                tag_id = tag_id,
+                create_by = create_by,
+                creation_datetime=creation_datetime)
+            link.save()
+
+        return Response(
+            {"message": f"Image [{image_id}] is linked with tag [{tag_id}]"},
+            status=status.HTTP_200_OK,
+        )
+
+        
