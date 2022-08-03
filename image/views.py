@@ -247,4 +247,19 @@ class ImageTagLinkView(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @action(methods=['delete'], detail=False)
+    def delete(self, request, *args, **kwargs):
+        image_name = self.request.query_params.get("image_name")
         
+        count =  ImageTagLinkage.objects.all().filter(image_name = image_name).delete()
+        return Response({'message': '{} Links were deleted successfully!'.format(count[0])}, status=status.HTTP_204_NO_CONTENT)
+
+
+        
+    # def partial_update(self, request, *args, **kwargs):
+    #     kwargs['partial'] = True
+
+    #     image_name = request.data["image_name"]
+    #     tag_names = request.data["tag_names"]
+        
+    #     queryset = ImageTagLinkage.objects.all().filter(image_name = image_name)
