@@ -250,16 +250,26 @@ class ImageTagLinkView(viewsets.ModelViewSet):
     @action(methods=['delete'], detail=False)
     def delete(self, request, *args, **kwargs):
         image_name = self.request.query_params.get("image_name")
-        
         count =  ImageTagLinkage.objects.all().filter(image_name = image_name).delete()
         return Response({'message': '{} Links were deleted successfully!'.format(count[0])}, status=status.HTTP_204_NO_CONTENT)
 
 
+    @action(methods=['patch'], detail=False)
+    def patch(self, request, *args, **kwargs):
+        tag_name = request.data["tag_name"]
+        new_tag_name = request.data["new_tag_name"]
+        update_data = {tag_name: new_tag_name}
         
-    # def partial_update(self, request, *args, **kwargs):
-    #     kwargs['partial'] = True
+        tag_links = ImageTagLinkage.objects.filter(tag_name = tag_name).update(tag_name = new_tag_name)
 
-    #     image_name = request.data["image_name"]
-    #     tag_names = request.data["tag_names"]
+        return Response({'message': f'Updated tag {tag_name} to {new_tag_name}'}, status=status.HTTP_200_OK)
+
+        # serializer = self.get_serializer(queryset, data=update_data, partial=True)
+
+        # if serializer.is_valid():
+        #     serializer.save()
+        #     return Response(serializer.data)
+
+        # # return a meaningful error response
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-    #     queryset = ImageTagLinkage.objects.all().filter(image_name = image_name)
