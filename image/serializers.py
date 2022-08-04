@@ -30,7 +30,7 @@ class ImageTagLinkageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageTagLinkage
         fields = ['id', 
-                  'image_id', 
-                  'tag_id', 
+                  'image_name', 
+                  'tag_name', 
                   'create_by',
                   'creation_datetime']
