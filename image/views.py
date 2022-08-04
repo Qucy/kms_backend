@@ -215,13 +215,19 @@ class ImageTagLinkView(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
 
         # retrieve parameter query
-        image_names = self.request.query_params.get("image_names").split(',')
+        image_names = self.request.query_params.get("image_names")
+        tag_name = self.request.query_params.get("tag_name")
 
         queryset = ImageTagLinkage.objects.all()
 
-        # if tag categroy is passed
+        # if image_name categroy is passed
         if image_names is not None and image_names != "":
-            queryset = queryset.filter(image_name__in=image_names)
+            image_name_list = image_names.split(',')
+            queryset = queryset.filter(image_name__in=image_name_list)
+
+        # if tag categroy is passed
+        if tag_name is not None and tag_name != "":
+            queryset = queryset.filter(tag_name__exact=tag_name)
 
         serializer = self.get_serializer(queryset, many=True)
 
@@ -255,21 +261,10 @@ class ImageTagLinkView(viewsets.ModelViewSet):
 
 
     @action(methods=['patch'], detail=False)
-    def patch(self, request, *args, **kwargs):
+    def update_tag_name(self, request, *args, **kwargs):
         tag_name = request.data["tag_name"]
         new_tag_name = request.data["new_tag_name"]
-        update_data = {tag_name: new_tag_name}
-        
+
         tag_links = ImageTagLinkage.objects.filter(tag_name = tag_name).update(tag_name = new_tag_name)
 
         return Response({'message': f'Updated tag {tag_name} to {new_tag_name}'}, status=status.HTTP_200_OK)
-
-        # serializer = self.get_serializer(queryset, data=update_data, partial=True)
-
-        # if serializer.is_valid():
-        #     serializer.save()
-        #     return Response(serializer.data)
-
-        # # return a meaningful error response
-        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
