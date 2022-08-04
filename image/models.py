@@ -48,24 +48,24 @@ class Tag(models.Model):
 class ImageTagLinkage(models.Model):
     """ Linkage table to store image and tag mappings
     """
-    image_id = models.IntegerField()
-    tag_id = models.IntegerField()
+    image_name = models.CharField(max_length=200, default="default_image_name")
+    tag_name = models.CharField(max_length=200, default="default_tag_name")
     create_by = models.CharField(max_length=10)
     creation_datetime = models.DateTimeField('datetime linkage created')
     
     class Meta:
 
         constraints = [
-            models.UniqueConstraint(fields=['image_id', 'tag_id'], name='image and tag link constraint'),
+            models.UniqueConstraint(fields=['image_name', 'tag_name'], name='image and tag name link constraint'),
         ]
 
         indexes = [
-            models.Index(fields=['image_id'], name='image_id_idx'),
-            models.Index(fields=['tag_id'], name='tag_id_idx'),
+            models.Index(fields=['image_name'], name='image_name_idx'),
+            models.Index(fields=['tag_name'], name='tag_name_idx'),
         ]
 
     def __str__(self) -> str:
-        return self.image_id + "<->" + self.tag_id
+        return self.image_name + "<->" + self.tag_name
 
 
 
