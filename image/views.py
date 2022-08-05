@@ -25,19 +25,15 @@ class ImageView(viewsets.ModelViewSet):
         """
         # retrieve parameter query
 
-        image_name = self.request.query_params.get("image_name")
-        image_type = self.request.query_params.get("image_type")
+        image_names = self.request.query_params.get("image_names")
         create_by = self.request.query_params.get("create_by")
 
         queryset = Image.objects.all()
 
         # if tag name is passed
-        if image_name is not None and image_name != "":
-            queryset = queryset.filter(image_name__contains=image_name)
-
-        # if tag categroy is passed
-        if image_type is not None and image_type != "":
-            queryset = queryset.filter(image_type__contains=image_type)
+        if image_names is not None and image_names != "":
+            image_name_list = image_names.split(',')
+            queryset = queryset.filter(image_name__in=image_name_list)
 
         # if tag categroy is passed
         if create_by is not None and create_by != "":
@@ -57,7 +53,7 @@ class ImageView(viewsets.ModelViewSet):
             elif record['image_type'].lower() == 'png':
                 img.save(buf, format='PNG')
             else:
-                print(f'Unsupport type {image_type}')
+                print(f'Unsupport image type ')
                 
             byte_im = base64.b64encode(buf.getvalue())
             record["img"] = byte_im
@@ -261,7 +257,7 @@ class ImageTagLinkView(viewsets.ModelViewSet):
 
 
     @action(methods=['patch'], detail=False)
-    def update_tag_name(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         tag_name = request.data["tag_name"]
         new_tag_name = request.data["new_tag_name"]
 
