@@ -11,6 +11,7 @@ class ImageSerializer(serializers.ModelSerializer):
                   'image_width', 
                   'image_height', 
                   'image_url',
+                  'image_hash',
                   'image_thumbnail',
                   'create_by',
                   'creation_datetime']

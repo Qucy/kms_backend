@@ -2,6 +2,8 @@ import io
 import os
 import base64
 import ast
+import hashlib
+import cv2
 from PIL import Image as PILImage
 
 from django.http import Http404, FileResponse
@@ -21,7 +23,7 @@ class ImageView(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         """
-        over ride list function
+        override list function
         """
         # retrieve parameter query
 
@@ -47,18 +49,18 @@ class ImageView(viewsets.ModelViewSet):
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
 
-        # Converting the image path into images
+        # Converting the image path into images TODO remove this code later when all the image have thumbnail
         for record in serializer.data:
             image_path = record["image_url"]
             img = PILImage.open(image_path)
             buf = io.BytesIO()
-            if record['image_type'].lower() in ('jpg', 'jpeg'):
-                img.save(buf, format='JPEG')
-            elif record['image_type'].lower() == 'png':
-                img.save(buf, format='PNG')
+            if record["image_type"].lower() in ("jpg", "jpeg"):
+                img.save(buf, format="JPEG")
+            elif record["image_type"].lower() == "png":
+                img.save(buf, format="PNG")
             else:
-                print(f'Unsupport type {image_type}')
-                
+                print(f"Unsupport type {image_type}")
+
             byte_im = base64.b64encode(buf.getvalue())
             record["img"] = byte_im
 
@@ -75,7 +77,7 @@ class ImageView(viewsets.ModelViewSet):
         image_file_io = io.BytesIO(image.file.read())
         image_file = PILImage.open(image_file_io)
 
-        # Saving image to the static file
+        # Saving image to the static file TODO optimized in future, save in tmp folder before below validation is passed
         image_path = "static/" + str(image)
         image_file.save(image_path)
         image_size = str(os.path.getsize(image_path) / 1024) + " KB"
@@ -84,14 +86,31 @@ class ImageView(viewsets.ModelViewSet):
         image_width, image_height = image_file.size
         image_type = str(image).split(".")[1]
 
+        # Calc image hash
+        image_hash = self._md5(image_path)
+
         # Check whether there are same image_name in database
-        existing_image = Image.objects.all().filter(image_name=image_name)
-        if existing_image is not None and len(existing_image) > 0:
+        existing_image_name = Image.objects.all().filter(image_name=image_name)
+
+        # Check whether there are same image hash in database
+        existing_image_hash = Image.objects.all().filter(image_hash=image_hash)
+
+        if existing_image_name is not None and len(existing_image_name) > 0:
             return Response(
-                {"message": f"Image name [{image_name}] already exist"},
+                {"message": f"Image name [{image_name}] already exist."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        elif existing_image_hash is not None and len(existing_image_hash) > 0:
+            return Response(
+                {"message": f"Image [{image_name}] already exist."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         else:
+
+            image_thumbnail = self._resize_image(image_type, image_path)
+
+            print(f"image_thumbnail in base64:{image_thumbnail}")
+
             image = Image(
                 image_name=image_name,
                 image_type=image_type,
@@ -99,51 +118,85 @@ class ImageView(viewsets.ModelViewSet):
                 image_width=image_width,
                 image_height=image_height,
                 image_url=image_path,
+                image_hash=image_hash,
                 image_desc=image_path,
+                image_thumbnail=image_thumbnail,
                 create_by=create_by,
             )
             image.save()
             return Response(
-                {"message": f"Image name [{image_name}] created", "image_id" : image.id},
+                {"message": f"Image name [{image_name}] created", "image_id": image.id},
                 status=status.HTTP_200_OK,
             )
 
     @action(detail=False, methods=["get"], name="Download image")
     def download(self, request, *args, **kwargs):
-        """ Given the image url download image from local server
-            by assign Cotent-Disposition to http header
-            https://github.com/eligrey/FileSaver.js/wiki/Saving-a-remote-file#using-http-header
+        """Given the image url download image from local server
+        by assign Cotent-Disposition to http header
+        https://github.com/eligrey/FileSaver.js/wiki/Saving-a-remote-file#using-http-header
         """
         # retrieve image url
         image_url = self.request.query_params.get("image_url")
         image_name = self.request.query_params.get("image_namme")
 
-        if image_url is not None and image_url != '':
+        if image_url is not None and image_url != "":
 
             if os.path.isfile(image_url):
                 # open the file
-                f = open(image_url, 'rb')
+                f = open(image_url, "rb")
                 # file size in bytes
                 size = os.path.getsize(image_url)
                 # retrieve image name from path
-                if image_name is None or image_name == '':
-                    image_name = image_url.split('/')[-1]
+                if image_name is None or image_name == "":
+                    image_name = image_url.split("/")[-1]
                 # send file
-                response = FileResponse(f, content_type='application/octet-stream; charset=utf-8')
-                response['Content-Length'] = size
-                response['Content-Disposition'] = f'attachment; filename="{image_name}"; filename*="{image_name}"'
+                response = FileResponse(
+                    f, content_type="application/octet-stream; charset=utf-8"
+                )
+                response["Content-Length"] = size
+                response[
+                    "Content-Disposition"
+                ] = f'attachment; filename="{image_name}"; filename*="{image_name}"'
                 return response
             else:
                 return Response(
-                {"message": f"Image {image_url} is not exist!"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+                    {"message": f"Image {image_url} is not exist!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         else:
             return Response(
                 {"message": f"Parameter image_url can not be empty!"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+    def _md5(self, file_path):
+        """calc hash value for image"""
+        hash_md5 = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+
+    def _resize_image(self, image_type, image_path):
+        """resize image based on previous image size
+        and encoded base64 for input image
+        """
+        # load image
+        img = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+        # scale down image
+        scale_percent = 10  # percent of original size
+        width = int(img.shape[1] * scale_percent / 100)
+        height = int(img.shape[0] * scale_percent / 100)
+        dim = (width, height)
+        # resize image
+        resized_image = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+        # get encode type
+        encode_type = ".jpg" if image_type.lower() in ["jpg", "jpeg"] else ".png"
+        # encode image
+        encoded_image = cv2.imencode(encode_type, resized_image)[1]
+        # encode image to base64
+        encoded_image_base64 = str(base64.b64encode(encoded_image))[2:-1]
+        return encoded_image_base64
 
 
 class TagView(viewsets.ModelViewSet):
@@ -233,7 +286,6 @@ class ImageTagLinkView(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
     def create(self, request, *args, **kwargs):
         tag_ids = request.data["tag_ids"]
         image_id = request.data["image_id"]
@@ -242,15 +294,14 @@ class ImageTagLinkView(viewsets.ModelViewSet):
 
         for tag_id in tag_ids:
             link = ImageTagLinkage(
-                image_id = image_id,
-                tag_id = tag_id,
-                create_by = create_by,
-                creation_datetime=creation_datetime)
+                image_id=image_id,
+                tag_id=tag_id,
+                create_by=create_by,
+                creation_datetime=creation_datetime,
+            )
             link.save()
 
         return Response(
             {"message": f"Image [{image_id}] is linked with tag [{tag_id}]"},
             status=status.HTTP_200_OK,
         )
-
-        
