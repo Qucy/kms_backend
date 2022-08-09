@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("image", "0002_auto_20220716_1012"),
+        ("image", "0004_alter_image_image_thumbnail"),
     ]
 
     operations = [

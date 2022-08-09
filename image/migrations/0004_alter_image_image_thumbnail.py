@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('image', '0003_image_image_hash_image_image unique constraint'),
+        ("image", "0003_auto_20220803_0853"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='image',
-            name='image_thumbnail',
+            model_name="image",
+            name="image_thumbnail",
             field=models.CharField(max_length=5000),
         ),
     ]
