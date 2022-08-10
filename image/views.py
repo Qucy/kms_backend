@@ -24,22 +24,28 @@ class ImageView(viewsets.ModelViewSet):
         over ride list function
         """
         # retrieve parameter query
-
         image_name = self.request.query_params.get("image_name")
         image_type = self.request.query_params.get("image_type")
         create_by = self.request.query_params.get("create_by")
+        image_names = self.request.query_params.get("image_names")
+        print(image_names)
 
         queryset = Image.objects.all()
 
-        # if tag name is passed
+        # if image name is passed
         if image_name is not None and image_name != "":
             queryset = queryset.filter(image_name__contains=image_name)
 
-        # if tag categroy is passed
+        # if image type is passed
         if image_type is not None and image_type != "":
             queryset = queryset.filter(image_type__contains=image_type)
 
-        # if tag categroy is passed
+        # if image names is passed
+        if image_names is not None and image_names != "":
+            image_name_list = image_names.split(",")
+            queryset = queryset.filter(image_name__in=image_name_list)
+
+        # if creator is passed
         if create_by is not None and create_by != "":
             queryset = queryset.filter(create_by__contains=create_by)
 
@@ -52,13 +58,13 @@ class ImageView(viewsets.ModelViewSet):
             image_path = record["image_url"]
             img = PILImage.open(image_path)
             buf = io.BytesIO()
-            if record['image_type'].lower() in ('jpg', 'jpeg'):
-                img.save(buf, format='JPEG')
-            elif record['image_type'].lower() == 'png':
-                img.save(buf, format='PNG')
+            if record["image_type"].lower() in ("jpg", "jpeg"):
+                img.save(buf, format="JPEG")
+            elif record["image_type"].lower() == "png":
+                img.save(buf, format="PNG")
             else:
-                print(f'Unsupport type {image_type}')
-                
+                print(f"Unsupport type {image_type}")
+
             byte_im = base64.b64encode(buf.getvalue())
             record["img"] = byte_im
 
@@ -104,46 +110,54 @@ class ImageView(viewsets.ModelViewSet):
             )
             image.save()
             return Response(
-                {"message": f"Image name [{image_name}] created", "image_id" : image.id},
+                {"message": f"Image name [{image_name}] created", "image_id": image.id},
                 status=status.HTTP_200_OK,
             )
 
+    @action(detail=False, methods=["get"], name="search")
+    def search(self, request, *args, **kwargs):
+        print(request)
+        return Response({"message": f"Request received"}, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=["get"], name="Download image")
     def download(self, request, *args, **kwargs):
-        """ Given the image url download image from local server
-            by assign Cotent-Disposition to http header
-            https://github.com/eligrey/FileSaver.js/wiki/Saving-a-remote-file#using-http-header
+        """Given the image url download image from local server
+        by assign Cotent-Disposition to http header
+        https://github.com/eligrey/FileSaver.js/wiki/Saving-a-remote-file#using-http-header
         """
         # retrieve image url
         image_url = self.request.query_params.get("image_url")
         image_name = self.request.query_params.get("image_namme")
 
-        if image_url is not None and image_url != '':
+        if image_url is not None and image_url != "":
 
             if os.path.isfile(image_url):
                 # open the file
-                f = open(image_url, 'rb')
+                f = open(image_url, "rb")
                 # file size in bytes
                 size = os.path.getsize(image_url)
                 # retrieve image name from path
-                if image_name is None or image_name == '':
-                    image_name = image_url.split('/')[-1]
+                if image_name is None or image_name == "":
+                    image_name = image_url.split("/")[-1]
                 # send file
-                response = FileResponse(f, content_type='application/octet-stream; charset=utf-8')
-                response['Content-Length'] = size
-                response['Content-Disposition'] = f'attachment; filename="{image_name}"; filename*="{image_name}"'
+                response = FileResponse(
+                    f, content_type="application/octet-stream; charset=utf-8"
+                )
+                response["Content-Length"] = size
+                response[
+                    "Content-Disposition"
+                ] = f'attachment; filename="{image_name}"; filename*="{image_name}"'
                 return response
             else:
                 return Response(
-                {"message": f"Image {image_url} is not exist!"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+                    {"message": f"Image {image_url} is not exist!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         else:
             return Response(
                 {"message": f"Parameter image_url can not be empty!"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
 
 
 class TagView(viewsets.ModelViewSet):
@@ -222,7 +236,7 @@ class ImageTagLinkView(viewsets.ModelViewSet):
 
         # if image_name categroy is passed
         if image_names is not None and image_names != "":
-            image_name_list = image_names.split(',')
+            image_name_list = image_names.split(",")
             queryset = queryset.filter(image_name__in=image_name_list)
 
         # if tag categroy is passed
@@ -233,7 +247,6 @@ class ImageTagLinkView(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
     def create(self, request, *args, **kwargs):
         tag_names = request.data["tag_names"]
         image_name = request.data["image_name"]
@@ -242,10 +255,11 @@ class ImageTagLinkView(viewsets.ModelViewSet):
 
         for tag_name in tag_names:
             link = ImageTagLinkage(
-                image_name = image_name,
-                tag_name = tag_name,
-                create_by = create_by,
-                creation_datetime=creation_datetime)
+                image_name=image_name,
+                tag_name=tag_name,
+                create_by=create_by,
+                creation_datetime=creation_datetime,
+            )
             link.save()
 
         return Response(
@@ -253,18 +267,25 @@ class ImageTagLinkView(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(methods=['delete'], detail=False)
+    @action(methods=["delete"], detail=False)
     def delete(self, request, *args, **kwargs):
         image_name = self.request.query_params.get("image_name")
-        count =  ImageTagLinkage.objects.all().filter(image_name = image_name).delete()
-        return Response({'message': '{} Links were deleted successfully!'.format(count[0])}, status=status.HTTP_204_NO_CONTENT)
+        count = ImageTagLinkage.objects.all().filter(image_name=image_name).delete()
+        return Response(
+            {"message": "{} Links were deleted successfully!".format(count[0])},
+            status=status.HTTP_204_NO_CONTENT,
+        )
 
-
-    @action(methods=['patch'], detail=False)
+    @action(methods=["patch"], detail=False)
     def update_tag_name(self, request, *args, **kwargs):
         tag_name = request.data["tag_name"]
         new_tag_name = request.data["new_tag_name"]
 
-        tag_links = ImageTagLinkage.objects.filter(tag_name = tag_name).update(tag_name = new_tag_name)
+        tag_links = ImageTagLinkage.objects.filter(tag_name=tag_name).update(
+            tag_name=new_tag_name
+        )
 
-        return Response({'message': f'Updated tag {tag_name} to {new_tag_name}'}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": f"Updated tag {tag_name} to {new_tag_name}"},
+            status=status.HTTP_200_OK,
+        )
