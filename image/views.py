@@ -30,8 +30,6 @@ class ImageView(viewsets.ModelViewSet):
         image_type = self.request.query_params.get("image_type")
         image_names = self.request.query_params.get("image_names")
         create_by = self.request.query_params.get("create_by")
-        image_names = self.request.query_params.get("image_names")
-        print(image_names)
 
         queryset = Image.objects.all()
 
@@ -135,11 +133,6 @@ class ImageView(viewsets.ModelViewSet):
                 {"message": f"Image name [{image_name}] created", "image_id": image.id},
                 status=status.HTTP_200_OK,
             )
-
-    @action(detail=False, methods=["get"], name="search")
-    def search(self, request, *args, **kwargs):
-        print(request)
-        return Response({"message": f"Request received"}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], name="Download image")
     def download(self, request, *args, **kwargs):
@@ -251,6 +244,32 @@ class TagView(viewsets.ModelViewSet):
             )
         else:
             return super().create(request, *args, **kwargs)
+
+    def update(self, request, pk=None):
+
+        # store and return old_tag_name
+        tag = Tag.objects.all().filter(id=pk)
+        old_tag_name = ""
+
+        if tag is not None and len(tag) > 0:
+            old_tag_name = tag[0].tag_name
+
+        # update the tag object
+
+        new_tag_name = request.data["tag_name"]
+        new_create_by = request.data["create_by"]
+        new_tag_category = request.data["tag_category"]
+
+        tag.update(
+            tag_name=new_tag_name,
+            create_by=new_create_by,
+            tag_category=new_tag_category,
+        )
+
+        return Response(
+            {"original_tag_name": old_tag_name},
+            status=status.HTTP_200_OK,
+        )
 
     def destroy(self, request, *args, **kwargs):
         """override destroy function"""
