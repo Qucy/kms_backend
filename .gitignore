@@ -1,7 +1,10 @@
 __pycache__/*
 __pycache__
 static/
+.DS_Store
 .venv
 .idea
 *log
 .vscode
+static/.DS_Store
+kms_backend/settings.py
