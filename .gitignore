@@ -5,3 +5,5 @@ __pycache__
 *log
 .vscode
 static/.DS_Store
+static/*
+*.json
