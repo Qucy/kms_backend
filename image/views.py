@@ -16,6 +16,23 @@ class CampaignTagLinkageView(viewsets.ModelViewSet):
     serializer_class = CampaignTagLinkageSerializer
     queryset = CampaignTagLinkage.objects.all()
 
+    def list(self, request, *args, **kwargs):
+        tag_name = self.request.query_params.get("tag_name")
+        campaign_id = self.request.query_params.get("campaign_id")
+        queryset = CampaignTagLinkage.objects.all()
+
+        # if tag_name is passed
+        if tag_name is not None and tag_name != "":
+            queryset = queryset.filter(tag_name__contains=tag_name)
+
+        # if tag campaign_id is passed
+        if campaign_id is not None and campaign_id != "":
+            queryset = queryset.filter(campaign_id__exact=campaign_id)
+
+        serializer = self.get_serializer(queryset, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class CampaignView(viewsets.ModelViewSet):
     serializer_class = CampaignSerializer
@@ -24,6 +41,23 @@ class CampaignView(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = Campaign.objects.all()
         serializer = self.get_serializer(queryset, many=True)
+
+        # Converting the image path into images
+        for record in serializer.data:
+            image_path = record["campaign_thumbnail_url"]
+            img = PILImage.open(image_path)
+            buf = io.BytesIO()
+            image_type = image_path.split('.')[1]
+
+            if image_type.lower() in ('jpg', 'jpeg'):
+                img.save(buf, format='JPEG')
+            elif image_type.lower() == 'png':
+                img.save(buf, format='PNG')
+            else:
+                print(f'Unsupport image type ')
+                
+            byte_im = base64.b64encode(buf.getvalue())
+            record["img"] = byte_im
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
