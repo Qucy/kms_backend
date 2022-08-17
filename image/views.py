@@ -19,6 +19,7 @@ class CampaignTagLinkageView(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         tag_name = self.request.query_params.get("tag_name")
         campaign_id = self.request.query_params.get("campaign_id")
+        queryset = CampaignTagLinkage.objects.all()
 
         # if tag_name is passed
         if tag_name is not None and tag_name != "":
@@ -26,7 +27,7 @@ class CampaignTagLinkageView(viewsets.ModelViewSet):
 
         # if tag campaign_id is passed
         if campaign_id is not None and campaign_id != "":
-            queryset = queryset.filter(campaign_id__contains=tag_name)
+            queryset = queryset.filter(campaign_id__exact=campaign_id)
 
         serializer = self.get_serializer(queryset, many=True)
 
