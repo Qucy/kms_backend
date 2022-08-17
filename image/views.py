@@ -46,9 +46,11 @@ class CampaignView(viewsets.ModelViewSet):
             image_path = record["campaign_thumbnail_url"]
             img = PILImage.open(image_path)
             buf = io.BytesIO()
-            if record['image_type'].lower() in ('jpg', 'jpeg'):
+            image_type = image_path.split('.')[1]
+
+            if image_type.lower() in ('jpg', 'jpeg'):
                 img.save(buf, format='JPEG')
-            elif record['image_type'].lower() == 'png':
+            elif image_type.lower() == 'png':
                 img.save(buf, format='PNG')
             else:
                 print(f'Unsupport image type ')
