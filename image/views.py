@@ -105,7 +105,7 @@ class ImageView(viewsets.ModelViewSet):
 
         # Converting the image path into images TODO remove this code later when all the image have thumbnail
         for record in serializer.data:
-            image_path = record["image_url"]
+            image_path = record["image_thumbnail_url"]
             img = PILImage.open(image_path)
             buf = io.BytesIO()
             if record["image_type"].lower() in ("jpg", "jpeg"):

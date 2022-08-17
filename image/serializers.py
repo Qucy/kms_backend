@@ -12,7 +12,7 @@ class ImageSerializer(serializers.ModelSerializer):
                   'image_height', 
                   'image_url',
                   'image_hash',
-                  'image_thumbnail',
+                  'image_thumbnail_url',
                   'image_hash',
                   'campaign_id',
                   'create_by',

@@ -14,7 +14,7 @@ class Image(models.Model):
     image_url = models.CharField(max_length=200)
     image_hash = models.CharField(max_length=64, default="")
     campaign_id = models.CharField(max_length=200)
-    image_thumbnail = models.CharField(max_length=5000)
+    image_thumbnail_url = models.CharField(max_length=200)
     create_by = models.CharField(max_length=10)
     creation_datetime = models.DateTimeField("datetime image uploaded", auto_now=True)
     
