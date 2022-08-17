@@ -9,8 +9,13 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from .serializers import ImageSerializer, TagSerializer, CampaignSerializer
-from .models import Image, Tag, Campaign
+from .serializers import ImageSerializer, TagSerializer, CampaignSerializer,CampaignTagLinkageSerializer
+from .models import Image, Tag, Campaign,CampaignTagLinkage
+
+class CampaignTagLinkageView(viewsets.ModelViewSet):
+    serializer_class = CampaignTagLinkageSerializer
+    queryset = CampaignTagLinkage.objects.all()
+
 
 class CampaignView(viewsets.ModelViewSet):
     serializer_class = CampaignSerializer
@@ -21,6 +26,7 @@ class CampaignView(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class ImageView(viewsets.ModelViewSet):
     """View for image module"""
