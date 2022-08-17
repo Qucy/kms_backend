@@ -5,41 +5,45 @@ class Image(models.Model):
     """
     Image model to store image meta data
     """
+
     image_name = models.CharField(max_length=50)
     image_type = models.CharField(max_length=20)
     image_size = models.CharField(max_length=20)
     image_width = models.PositiveBigIntegerField(default=0)
     image_height = models.PositiveBigIntegerField(default=0)
     image_url = models.CharField(max_length=200)
-    image_thumbnail = models.BinaryField()
-    image_hash = models.CharField(max_length=64, default='')
-    campaign_id = models.CharField(max_length=200)
+    image_hash = models.CharField(max_length=64, default="")
+    image_desc = models.CharField(max_length=200)
+    image_thumbnail = models.CharField(max_length=5000)
     create_by = models.CharField(max_length=10)
-    creation_datetime = models.DateTimeField('datetime image uploaded', auto_now=True)
+    creation_datetime = models.DateTimeField("datetime image uploaded", auto_now=True)
 
     class Meta:
 
         constraints = [
-            models.UniqueConstraint(fields=['image_name'], name='image name unique constraint'),
+            models.UniqueConstraint(
+                fields=["image_name"], name="image name unique constraint"
+            ),
         ]
-
 
     def __str__(self) -> str:
         return self.image_name
 
 
 class Tag(models.Model):
-    """ Tag model to store image taggings
-    """
+    """Tag model to store image taggings"""
+
     tag_name = models.CharField(max_length=200)
     tag_category = models.CharField(max_length=50)
     create_by = models.CharField(max_length=10)
-    creation_datetime = models.DateTimeField('datetime tag created')
+    creation_datetime = models.DateTimeField("datetime tag created")
 
     class Meta:
 
         constraints = [
-            models.UniqueConstraint(fields=['tag_name'], name='tag name unique constraint'),
+            models.UniqueConstraint(
+                fields=["tag_name"], name="tag name unique constraint"
+            ),
         ]
 
     def __str__(self) -> str:

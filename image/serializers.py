@@ -11,6 +11,7 @@ class ImageSerializer(serializers.ModelSerializer):
                   'image_width', 
                   'image_height', 
                   'image_url',
+                  'image_hash',
                   'image_thumbnail',
                   'image_hash',
                   'campaign_id',
