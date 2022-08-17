@@ -22,7 +22,7 @@ from image import views
 router = routers.DefaultRouter()
 router.register(r'image', views.ImageView, 'image')
 router.register(r'image-tag', views.TagView, 'image-tag')
-router.register(r'image-tag-link', views.ImageTagLinkView, 'image-tag-link')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),

@@ -9,9 +9,18 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from .serializers import ImageSerializer, TagSerializer, ImageTagLinkageSerializer
-from .models import Image, Tag, ImageTagLinkage
+from .serializers import ImageSerializer, TagSerializer, CampaignSerializer
+from .models import Image, Tag, Campaign
 
+class CampaignView(viewsets.ModelViewSet):
+    serializer_class = CampaignSerializer
+    queryset = Campaign.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        queryset = Campaign.objects.all()
+        serializer = self.get_serializer(queryset, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ImageView(viewsets.ModelViewSet):
     """View for image module"""
@@ -202,65 +211,65 @@ class TagView(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ImageTagLinkView(viewsets.ModelViewSet):
-    """View for image tag linkage module"""
+# class ImageTagLinkView(viewsets.ModelViewSet):
+#     """View for image tag linkage module"""
 
-    serializer_class = ImageTagLinkageSerializer
-    queryset = ImageTagLinkage.objects.all()
+#     serializer_class = ImageTagLinkageSerializer
+#     queryset = ImageTagLinkage.objects.all()
 
-    def list(self, request, *args, **kwargs):
+#     def list(self, request, *args, **kwargs):
 
-        # retrieve parameter query
-        image_names = self.request.query_params.get("image_names")
-        tag_name = self.request.query_params.get("tag_name")
+#         # retrieve parameter query
+#         image_names = self.request.query_params.get("image_names")
+#         tag_name = self.request.query_params.get("tag_name")
 
-        queryset = ImageTagLinkage.objects.all()
+#         queryset = ImageTagLinkage.objects.all()
 
-        # if image_name categroy is passed
-        if image_names is not None and image_names != "":
-            image_name_list = image_names.split(',')
-            queryset = queryset.filter(image_name__in=image_name_list)
+#         # if image_name categroy is passed
+#         if image_names is not None and image_names != "":
+#             image_name_list = image_names.split(',')
+#             queryset = queryset.filter(image_name__in=image_name_list)
 
-        # if tag categroy is passed
-        if tag_name is not None and tag_name != "":
-            queryset = queryset.filter(tag_name__exact=tag_name)
+#         # if tag categroy is passed
+#         if tag_name is not None and tag_name != "":
+#             queryset = queryset.filter(tag_name__exact=tag_name)
 
-        serializer = self.get_serializer(queryset, many=True)
+#         serializer = self.get_serializer(queryset, many=True)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-    def create(self, request, *args, **kwargs):
-        tag_names = request.data["tag_names"]
-        image_name = request.data["image_name"]
-        create_by = request.data["create_by"]
-        creation_datetime = request.data["creation_datetime"]
-
-        for tag_name in tag_names:
-            link = ImageTagLinkage(
-                image_name = image_name,
-                tag_name = tag_name,
-                create_by = create_by,
-                creation_datetime=creation_datetime)
-            link.save()
-
-        return Response(
-            {"message": f"Image [{image_name}] is linked with tag [{tag_name}]"},
-            status=status.HTTP_200_OK,
-        )
-
-    @action(methods=['delete'], detail=False)
-    def delete(self, request, *args, **kwargs):
-        image_name = self.request.query_params.get("image_name")
-        count =  ImageTagLinkage.objects.all().filter(image_name = image_name).delete()
-        return Response({'message': '{} Links were deleted successfully!'.format(count[0])}, status=status.HTTP_204_NO_CONTENT)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-    @action(methods=['patch'], detail=False)
-    def patch(self, request, *args, **kwargs):
-        tag_name = request.data["tag_name"]
-        new_tag_name = request.data["new_tag_name"]
+#     def create(self, request, *args, **kwargs):
+#         tag_names = request.data["tag_names"]
+#         image_name = request.data["image_name"]
+#         create_by = request.data["create_by"]
+#         creation_datetime = request.data["creation_datetime"]
 
-        tag_links = ImageTagLinkage.objects.filter(tag_name = tag_name).update(tag_name = new_tag_name)
+#         for tag_name in tag_names:
+#             link = ImageTagLinkage(
+#                 image_name = image_name,
+#                 tag_name = tag_name,
+#                 create_by = create_by,
+#                 creation_datetime=creation_datetime)
+#             link.save()
 
-        return Response({'message': f'Updated tag {tag_name} to {new_tag_name}'}, status=status.HTTP_200_OK)
+#         return Response(
+#             {"message": f"Image [{image_name}] is linked with tag [{tag_name}]"},
+#             status=status.HTTP_200_OK,
+#         )
+
+#     @action(methods=['delete'], detail=False)
+#     def delete(self, request, *args, **kwargs):
+#         image_name = self.request.query_params.get("image_name")
+#         count =  ImageTagLinkage.objects.all().filter(image_name = image_name).delete()
+#         return Response({'message': '{} Links were deleted successfully!'.format(count[0])}, status=status.HTTP_204_NO_CONTENT)
+
+
+#     @action(methods=['patch'], detail=False)
+#     def patch(self, request, *args, **kwargs):
+#         tag_name = request.data["tag_name"]
+#         new_tag_name = request.data["new_tag_name"]
+
+#         tag_links = ImageTagLinkage.objects.filter(tag_name = tag_name).update(tag_name = new_tag_name)
+
+#         return Response({'message': f'Updated tag {tag_name} to {new_tag_name}'}, status=status.HTTP_200_OK)

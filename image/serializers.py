@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Image, Tag, ImageTagLinkage
+from .models import Image, Tag, CampaignTagLinkage,Campaign
 
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,6 +12,8 @@ class ImageSerializer(serializers.ModelSerializer):
                   'image_height', 
                   'image_url',
                   'image_thumbnail',
+                  'image_hash',
+                  'campaign_id',
                   'create_by',
                   'creation_datetime']
 
@@ -26,11 +28,23 @@ class TagSerializer(serializers.ModelSerializer):
                   'creation_datetime']
 
 
-class ImageTagLinkageSerializer(serializers.ModelSerializer):
+class CampaignTagLinkageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ImageTagLinkage
+        model = CampaignTagLinkage
         fields = ['id', 
-                  'image_name', 
+                  'campaign_id', 
                   'tag_name', 
-                  'create_by',
+                  'creation_datetime']
+
+
+class CampaignSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Campaign
+        fields = ['id', 
+                  'company', 
+                  'hsbc_vs_non_hsbc', 
+                  'location',
+                  'message_type',
+                  'response_rate',
+                  'campaign_thumbnail_url',
                   'creation_datetime']

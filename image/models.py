@@ -11,8 +11,9 @@ class Image(models.Model):
     image_width = models.PositiveBigIntegerField(default=0)
     image_height = models.PositiveBigIntegerField(default=0)
     image_url = models.CharField(max_length=200)
-    image_desc = models.CharField(max_length=200)
     image_thumbnail = models.BinaryField()
+    image_hash = models.CharField(max_length=64, default='')
+    campaign_id = models.CharField(max_length=200)
     create_by = models.CharField(max_length=10)
     creation_datetime = models.DateTimeField('datetime image uploaded', auto_now=True)
 
@@ -45,28 +46,41 @@ class Tag(models.Model):
         return self.tag_category + ":" + self.tag_name
 
 
-class ImageTagLinkage(models.Model):
+class CampaignTagLinkage(models.Model):
     """ Linkage table to store image and tag mappings
     """
-    image_name = models.CharField(max_length=200, default="default_image_name")
-    tag_name = models.CharField(max_length=200, default="default_tag_name")
-    create_by = models.CharField(max_length=10)
+    campaign_id = models.CharField(max_length=200)
+    tag_name = models.CharField(max_length=200)
     creation_datetime = models.DateTimeField('datetime linkage created')
     
     class Meta:
 
         constraints = [
-            models.UniqueConstraint(fields=['image_name', 'tag_name'], name='image and tag name link constraint'),
+            models.UniqueConstraint(fields=['campaign_id', 'tag_name'], name='campaign and tag name link constraint'),
         ]
 
         indexes = [
-            models.Index(fields=['image_name'], name='image_name_idx'),
+            models.Index(fields=['campaign_id'], name='campaign_id_tag_idx'),
             models.Index(fields=['tag_name'], name='tag_name_idx'),
         ]
 
     def __str__(self) -> str:
-        return self.image_name + "<->" + self.tag_name
+        return self.campaign_id + "<->" + self.tag_name
 
 
 
+class Campaign(models.Model):
+    """
+    Image model to store image meta data
+    """
+    company = models.CharField(max_length=30)
+    hsbc_vs_non_hsbc = models.CharField(max_length=10)
+    location = models.CharField(max_length=50)
+    message_type = models.CharField(max_length=50)
+    response_rate = models.CharField(max_length=200)
+    campaign_thumbnail_url = models.CharField(max_length=200)
+    creation_datetime = models.DateTimeField('datetime image uploaded', auto_now=True)
 
+
+    def __str__(self) -> str:
+        return self.company + "<->" + self.location + "<->" + self.message_type + "<->" + self.creation_datetime
