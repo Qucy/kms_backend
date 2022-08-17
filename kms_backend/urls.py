@@ -22,7 +22,8 @@ from image import views
 router = routers.DefaultRouter()
 router.register(r'image', views.ImageView, 'image')
 router.register(r'image-tag', views.TagView, 'image-tag')
-
+router.register(r'campaign', views.CampaignView, 'campaign')
+router.register(r'campaign-tag-linkage', views.CampaignTagLinkageView, 'campaign-tag-linkage')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
