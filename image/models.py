@@ -13,10 +13,11 @@ class Image(models.Model):
     image_height = models.PositiveBigIntegerField(default=0)
     image_url = models.CharField(max_length=200)
     image_hash = models.CharField(max_length=64, default="")
-    image_desc = models.CharField(max_length=200)
+    campaign_id = models.CharField(max_length=200)
     image_thumbnail = models.CharField(max_length=5000)
     create_by = models.CharField(max_length=10)
     creation_datetime = models.DateTimeField("datetime image uploaded", auto_now=True)
+    
 
     class Meta:
 

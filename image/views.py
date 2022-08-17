@@ -78,7 +78,7 @@ class ImageView(viewsets.ModelViewSet):
         image_name = self.request.query_params.get("image_name")
         image_type = self.request.query_params.get("image_type")
         image_names = self.request.query_params.get("image_names")
-        create_by = self.request.query_params.get("create_by")
+        campaign_id = self.request.query_params.get("campaign_id")
 
         queryset = Image.objects.all()
 
@@ -96,8 +96,8 @@ class ImageView(viewsets.ModelViewSet):
             queryset = queryset.filter(image_name__in=image_name_list)
 
         # if creator is passed
-        if create_by is not None and create_by != "":
-            queryset = queryset.filter(create_by__contains=create_by)
+        if campaign_id is not None and campaign_id != "":
+            queryset = queryset.filter(campaign_id__exact=campaign_id)
 
         # pagnation
         page = self.paginate_queryset(queryset)
@@ -272,7 +272,7 @@ class TagView(viewsets.ModelViewSet):
 
         # if tag categroy is passed
         if tag_category is not None and tag_category != "":
-            queryset = queryset.filter(tag_category__contains=tag_category)
+            queryset = queryset.filter(tag_category__contains=tag_category)        
 
         # pagnation
         page = self.paginate_queryset(queryset)
