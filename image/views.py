@@ -117,7 +117,7 @@ class CampaignView(viewsets.ModelViewSet):
         image_file = self._expand2square(image_file, 'white').resize(SIZE)
 
         # Saving image to the static file TODO optimized in future, save in tmp folder before below validation is passed
-        image_path = "static/thumbnail" + str(image)
+        image_path = "static/thumbnail/" + str(image)
         image_file.save(image_path)
 
 
@@ -254,7 +254,7 @@ class ImageView(viewsets.ModelViewSet):
             # Saving image to the static file TODO optimized in future, save in tmp folder before below validation is passed
 
             image_file = self._expand2square(image_file, 'white').resize(SIZE)
-            image_thumbnail_path = "static/image_thumbnail" + str(image)
+            image_thumbnail_path = "static/image_thumbnail/" + str(image)
             image_file.save(image_path)
 
 
