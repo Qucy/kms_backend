@@ -36,6 +36,39 @@ class CampaignTagLinkageView(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+    def create(self, request, *args, **kwargs):
+        tag_names = request.data["tag_names"]
+        campaign_id = request.data["campaign_id"]
+        creation_datetime = request.data["creation_datetime"]
+
+        for tag_name in tag_names.split(','):
+            link = CampaignTagLinkage(
+                campaign_id = campaign_id,
+                tag_name = tag_name,
+                creation_datetime=creation_datetime)
+            link.save()
+
+        return Response(
+            {"message": f"campaign_id [{campaign_id}] is linked with tag [{tag_names}]"},
+            status=status.HTTP_200_OK,
+        )
+
+    @action(methods=['delete'], detail=False)
+    def delete(self, request, *args, **kwargs):
+        campaign_id = self.request.query_params.get("campaign_id")
+        count =  CampaignTagLinkage.objects.all().filter(campaign_id = campaign_id).delete()
+        return Response({'message': '{} Links were deleted successfully!'.format(count[0])}, status=status.HTTP_204_NO_CONTENT)
+
+
+    @action(methods=['patch'], detail=False)
+    def patch(self, request, *args, **kwargs):
+        tag_name = request.data["tag_name"]
+        new_tag_name = request.data["new_tag_name"]
+
+        tag_links = CampaignTagLinkage.objects.filter(tag_name = tag_name).update(tag_name = new_tag_name)
+        return Response({'message': f'Updated tag {tag_name} to {new_tag_name}'}, status=status.HTTP_200_OK)
+
+
 class CampaignView(viewsets.ModelViewSet):
     serializer_class = CampaignSerializer
     queryset = Campaign.objects.all()
