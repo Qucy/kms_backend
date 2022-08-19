@@ -207,21 +207,27 @@ class ImageView(viewsets.ModelViewSet):
         create_by = request.data["create_by"]
         campaign_id = request.data["campaign_id"]
 
+        # Define the path to save images and thumbnail
+        image_tmp_path = "static/" + str(image)
+        image_path = "static/images/" + str(image)
+        image_thumbnail_path = "static/image_thumbnail/" + str(image)
+
         # Process the image
         image_file_io = io.BytesIO(image.file.read())
         image_file = PILImage.open(image_file_io)
 
-        # Saving image to the static file TODO optimized in future, save in tmp folder before below validation is passed
-        image_path = "static/" + str(image)
-        image_file.save(image_path)
-        image_size = str(os.path.getsize(image_path) / 1024) + " KB"
+        # Saving image to the static file 
+        image_file.save(image_tmp_path)
 
         # Saving the image meta data
         image_width, image_height = image_file.size
-        image_type = str(image).split(".")[1]
+        image_type = str(image).split(".")[-1]
+
+        # Get size of image after saving 
+        image_size = str(os.path.getsize(image_tmp_path) / 1024) + " KB"
 
         # Calc image hash
-        image_hash = self._md5(image_path)
+        image_hash = self._md5(image_tmp_path)
 
         # Check whether there are same image_name in database
         existing_image_name = Image.objects.all().filter(image_name=image_name)
@@ -240,15 +246,15 @@ class ImageView(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         else:
+            # Saving the actual images and remove the tmp image file
+            image_file.save(image_path)
+            os.remove(image_tmp_path)
 
             # image_thumbnail = self._resize_image(image_type, image_path)
-            # Saving image to the static file TODO optimized in future, save in tmp folder before below validation is passed
-            image_file_io = io.BytesIO(image.file.read())
-            image_file = PILImage.open(image_file_io)
-            image_file = expand2square(image_file, 'white').resize(THUMBNAIL_SIZE)
-            image_thumbnail_path = "static/image_thumbnail/" + str(image)
-            image_file.save(image_path)
+            image_thumbnail_file = expand2square(image_file, 'white').resize(THUMBNAIL_SIZE)
 
+            # Saving image once all validation is done
+            image_thumbnail_file.save(image_thumbnail_path)
 
             image = Image(
                 image_name=image_name,
