@@ -14,6 +14,10 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from .serializers import ImageSerializer, TagSerializer, CampaignSerializer,CampaignTagLinkageSerializer
 from .models import Image, Tag, Campaign,CampaignTagLinkage
+from .utils import expand2square
+
+THUMBNAIL_SIZE = 550, 550
+
 
 class CampaignTagLinkageView(viewsets.ModelViewSet):
     serializer_class = CampaignTagLinkageSerializer
@@ -28,7 +32,7 @@ class CampaignTagLinkageView(viewsets.ModelViewSet):
         if tag_name is not None and tag_name != "":
             queryset = queryset.filter(tag_name__contains=tag_name)
 
-        # if tag campaign_id is passed
+        # Filter the campaign with campaign id 
         if campaign_id is not None and campaign_id != "":
             queryset = queryset.filter(campaign_id__exact=campaign_id)
 
@@ -40,7 +44,7 @@ class CampaignTagLinkageView(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         tag_names = request.data["tag_names"]
         campaign_id = request.data["campaign_id"]
-        creation_datetime = request.data["creation_datetime"]
+        creation_datetime = str(datetime.datetime.now())
 
         for tag_name in tag_names.split(','):
             link = CampaignTagLinkage(
@@ -98,7 +102,6 @@ class CampaignView(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
         
     def create(self, request, *args, **kwargs):
-        SIZE = 550, 550
 
         # Extract image payload
         company = request.data["company"]
@@ -114,7 +117,7 @@ class CampaignView(viewsets.ModelViewSet):
         # Process the image
         image_file_io = io.BytesIO(image.file.read())
         image_file = PILImage.open(image_file_io)
-        image_file = self._expand2square(image_file, 'white').resize(SIZE)
+        image_file = expand2square(image_file, 'white').resize(THUMBNAIL_SIZE)
 
         # Saving image to the static file TODO optimized in future, save in tmp folder before below validation is passed
         image_path = "static/thumbnail/" + str(image)
@@ -138,18 +141,7 @@ class CampaignView(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    def _expand2square(self, pil_img, background_color):
-        width, height = pil_img.size
-        if width == height:
-            return pil_img
-        elif width > height:
-            result = PILImage.new(pil_img.mode, (width, width), background_color)
-            result.paste(pil_img, (0, (width - height) // 2))
-            return result
-        else:
-            result = PILImage.new(pil_img.mode, (height, height), background_color)
-            result.paste(pil_img, ((height - width) // 2, 0))
-            return result
+
 
 class ImageView(viewsets.ModelViewSet):
     """View for image module"""
@@ -208,7 +200,6 @@ class ImageView(viewsets.ModelViewSet):
         return self.get_paginated_response(serializer.data)
 
     def create(self, request, *args, **kwargs):
-        SIZE = 550, 550
 
         # Extract image payload
         image = request.data["file"]
@@ -253,7 +244,7 @@ class ImageView(viewsets.ModelViewSet):
             # image_thumbnail = self._resize_image(image_type, image_path)
             # Saving image to the static file TODO optimized in future, save in tmp folder before below validation is passed
 
-            image_file = self._expand2square(image_file, 'white').resize(SIZE)
+            image_file = expand2square(image_file, 'white').resize(THUMBNAIL_SIZE)
             image_thumbnail_path = "static/image_thumbnail/" + str(image)
             image_file.save(image_path)
 
@@ -344,19 +335,6 @@ class ImageView(viewsets.ModelViewSet):
         # encode image to base64
         encoded_image_base64 = str(base64.b64encode(encoded_image))[2:-1]
         return encoded_image_base64
-
-    def _expand2square(self, pil_img, background_color):
-        width, height = pil_img.size
-        if width == height:
-            return pil_img
-        elif width > height:
-            result = PILImage.new(pil_img.mode, (width, width), background_color)
-            result.paste(pil_img, (0, (width - height) // 2))
-            return result
-        else:
-            result = PILImage.new(pil_img.mode, (height, height), background_color)
-            result.paste(pil_img, ((height - width) // 2, 0))
-            return result
 
 
 class TagView(viewsets.ModelViewSet):
