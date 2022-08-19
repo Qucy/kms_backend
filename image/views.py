@@ -243,7 +243,8 @@ class ImageView(viewsets.ModelViewSet):
 
             # image_thumbnail = self._resize_image(image_type, image_path)
             # Saving image to the static file TODO optimized in future, save in tmp folder before below validation is passed
-
+            image_file_io = io.BytesIO(image.file.read())
+            image_file = PILImage.open(image_file_io)
             image_file = expand2square(image_file, 'white').resize(THUMBNAIL_SIZE)
             image_thumbnail_path = "static/image_thumbnail/" + str(image)
             image_file.save(image_path)
