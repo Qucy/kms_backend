@@ -78,22 +78,37 @@ class CampaignView(viewsets.ModelViewSet):
     serializer_class = CampaignSerializer
     queryset = Campaign.objects.all()
 
+
     def list(self, request, *args, **kwargs):
         queryset = Campaign.objects.all()
 
         # Extract the request params
         tags = self.request.query_params.get("tags")
+        hsbc_vs_non_hsbc = self.request.query_params.get("hsbc_vs_non_hsbc")
+        location = self.request.query_params.get("location")
+        message_type = self.request.query_params.get("message_type")
+        
+        # Filtering logic on hsbc_vs_non_hsbc (AND condition)
+        if hsbc_vs_non_hsbc:
+            queryset = queryset.filter(hsbc_vs_non_hsbc__exact=hsbc_vs_non_hsbc)
 
-        # if image names is passed
+        # Filtering logic on location (AND condition)
+        if location:
+            queryset = queryset.filter(location__exact=location)
+
+        # Filtering logic on message_type (AND condition)
+        if message_type:
+            queryset = queryset.filter(message_type__exact=message_type)
+
+        # Filtering logic on tags (AND condition)
         if tags is not None and tags != "":
             # Extract the tags filter
             tags = tags.split(",")
 
-            # Query the campaign tag linkage to get campaign id containing the tag
+            # Query the campaign tag linkage to get unique campaign id containing the specific tags
             tag_queryset = CampaignTagLinkage.objects.all()
             tag_queryset = tag_queryset.filter(tag_name__in=tags)
             campaign_ids = list(set([int(campaign.campaign_id) for campaign in tag_queryset]))
-            print(campaign_ids)
 
             # Filter campaign by campaign id
             queryset = queryset.filter(pk__in=campaign_ids)
