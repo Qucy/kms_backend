@@ -137,7 +137,7 @@ class CampaignView(viewsets.ModelViewSet):
         campaign.save()
 
         return Response(
-            {"message": f"Campaign  created", "image_id": campaign.id},
+            {"message": f"Campaign  created", "campaign_id": campaign.id},
             status=status.HTTP_200_OK,
         )
 
