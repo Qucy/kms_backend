@@ -1,6 +1,6 @@
 from PIL import Image as PILImage
 
-def expand2square(self, pil_img, background_color):
+def expand2square(pil_img, background_color):
     width, height = pil_img.size
     if width == height:
         return pil_img
