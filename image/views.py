@@ -259,8 +259,15 @@ class ImageView(viewsets.ModelViewSet):
         image_type = self.request.query_params.get("image_type")
         image_names = self.request.query_params.get("image_names")
         campaign_id = self.request.query_params.get("campaign_id")
-
+        tag_names = self.request.query_params.get("tag_names")
         queryset = Image.objects.all()
+
+        if tag_names:
+            tag_names_list = tag_names.split(',')
+            campaign_linkage_query_set = CampaignTagLinkage.objects.all().filter(tag_name__in = tag_names_list)
+            campaign_id_list = list(set([int(campaign.campaign_id) for campaign in campaign_linkage_query_set]))
+            print(campaign_id_list)
+            queryset = queryset.filter(campaign_id__in = campaign_id_list)
 
         # if image name is passed
         if image_name is not None and image_name != "":
