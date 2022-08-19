@@ -88,4 +88,4 @@ class Campaign(models.Model):
 
 
     def __str__(self) -> str:
-        return self.company + "<->" + self.location + "<->" + self.message_type + "<->" + self.creation_datetime
+        return self.company + "<->" + self.location + "<->" + self.message_type + "<->" + str(self.creation_datetime)

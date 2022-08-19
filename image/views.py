@@ -80,6 +80,25 @@ class CampaignView(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = Campaign.objects.all()
+
+        # Extract the request params
+        tags = self.request.query_params.get("tags")
+
+        # if image names is passed
+        if tags is not None and tags != "":
+            # Extract the tags filter
+            tags = tags.split(",")
+
+            # Query the campaign tag linkage to get campaign id containing the tag
+            tag_queryset = CampaignTagLinkage.objects.all()
+            tag_queryset = tag_queryset.filter(tag_name__in=tags)
+            campaign_ids = list(set([int(campaign.campaign_id) for campaign in tag_queryset]))
+            print(campaign_ids)
+
+            # Filter campaign by campaign id
+            queryset = queryset.filter(pk__in=campaign_ids)
+
+        # Serialize data
         serializer = self.get_serializer(queryset, many=True)
 
         # Converting the image path into images
@@ -141,6 +160,14 @@ class CampaignView(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    def destroy(self, request, *args, **kwargs):
+        campaign_id = self.request.query_params.get("campaign_id")
+
+        queryset = Campaign.objects.all().filter(id=campaign_id)
+        print(queryset)
+        
+        image_queryset = Image.objects.all().filter(campaign_id__exat = campaign_id)
+        print(image_queryset)
 
 
 class ImageView(viewsets.ModelViewSet):
