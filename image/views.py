@@ -17,6 +17,8 @@ from .models import Image, Tag, Campaign,CampaignTagLinkage
 from .utils import expand2square
 
 THUMBNAIL_SIZE = 550, 550
+CAMPAIGN_THUMBNAIL_PATH = "static/thumbnail/"
+
 
 
 class CampaignTagLinkageView(viewsets.ModelViewSet):
@@ -154,7 +156,7 @@ class CampaignView(viewsets.ModelViewSet):
         image_file = expand2square(image_file, 'white').resize(THUMBNAIL_SIZE)
 
         # Saving image to the static file TODO optimized in future, save in tmp folder before below validation is passed
-        image_path = "static/thumbnail/" + str(image)
+        image_path = CAMPAIGN_THUMBNAIL_PATH + str(image)
         image_file.save(image_path)
 
 
@@ -175,14 +177,49 @@ class CampaignView(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    def destroy(self, request, *args, **kwargs):
-        campaign_id = self.request.query_params.get("campaign_id")
+    def perform_destroy(self, instance):
+        # Delete the campaign thumbnail file
+        campaign_thumbnail_file_path = instance.campaign_thumbnail_url
+        os.remove(campaign_thumbnail_file_path)
 
-        queryset = Campaign.objects.all().filter(id=campaign_id)
-        print(queryset)
+        # Filter out the images related to the campaign
+        image_queryset = Image.objects.all().filter(campaign_id__exact = instance.id)
         
-        image_queryset = Image.objects.all().filter(campaign_id__exat = campaign_id)
-        print(image_queryset)
+        # Delete thumbnail image files
+        image_file_paths = [image.image_url for image in image_queryset]
+        for image_file_path in image_file_paths:
+            os.remove(image_file_path)
+
+        # Delete thumbnail image files
+        image_thumbnail_file_paths = [image.image_thumbnail_url for image in image_queryset]
+        for image_thumbnail_file_path in image_thumbnail_file_paths:
+            os.remove(image_thumbnail_file_path)
+        
+        # Delete image queryset
+        image_queryset.delete()
+
+        # Delete CampaignTagLinkage
+        camapign_taglink_queryset = CampaignTagLinkage.objects.all().filter(campaign_id__exact = instance.id)
+        camapign_taglink_queryset.delete()
+
+        # Delete Campaign Instance
+        instance.delete()   
+
+    # def destroy(self, request, *args, **kwargs):
+
+    #     # delete campaign
+    #     campaign = self.get_object()
+    #     self.perform_destroy(campaign)
+
+    #     print(campaign.id)
+        
+    #     image_queryset = Image.objects.all().filter(campaign_id__exat = campaign.id)
+    #     print(image_queryset)
+
+    #     return Response(
+    #         {"message": f"deleted"},
+    #         status=status.HTTP_200_OK,
+    #     )
 
 
 class ImageView(viewsets.ModelViewSet):
