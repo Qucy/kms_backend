@@ -16,7 +16,7 @@ class Image(models.Model):
     campaign_id = models.CharField(max_length=200)
     image_thumbnail_url = models.CharField(max_length=200)
     create_by = models.CharField(max_length=10)
-    creation_datetime = models.DateTimeField("datetime image uploaded", auto_now=True)
+    creation_datetime = models.DateTimeField("datetime image uploaded")
     
 
     class Meta:
@@ -84,7 +84,7 @@ class Campaign(models.Model):
     message_type = models.CharField(max_length=50)
     response_rate = models.CharField(max_length=200)
     campaign_thumbnail_url = models.CharField(max_length=200)
-    creation_datetime = models.DateTimeField('datetime image uploaded', auto_now=True)
+    creation_datetime = models.DateTimeField('datetime image uploaded')
 
 
     def __str__(self) -> str:

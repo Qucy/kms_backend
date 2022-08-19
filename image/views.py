@@ -136,6 +136,28 @@ class CampaignView(viewsets.ModelViewSet):
             record["img"] = byte_im
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, *args, **kwargs):
+        if 'tag_names' in request.data:
+            tag_names = request.data["tag_names"]
+            instance = self.get_object()
+
+            # Delete CampaignTagLinkage for the campaign id
+            camapign_taglink_queryset = CampaignTagLinkage.objects.all().filter(campaign_id__exact = instance.id)
+            camapign_taglink_queryset.delete()
+
+            # Generate the new createion_datetime
+            creation_datetime = str(datetime.datetime.now())
+
+            # Re-create the campaign linkage for campaign id
+            for tag_name in tag_names.split(','):
+                link = CampaignTagLinkage(
+                    campaign_id = instance.id,
+                    tag_name = tag_name,
+                    creation_datetime=creation_datetime)
+                link.save()
+
+        return super().partial_update(request, *args, **kwargs)
         
     def create(self, request, *args, **kwargs):
 
