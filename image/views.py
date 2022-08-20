@@ -107,13 +107,22 @@ class CampaignView(viewsets.ModelViewSet):
             # Extract the tags filter
             tags = tags.split(",")
 
-            # Query the campaign tag linkage to get unique campaign id containing the specific tags
-            tag_queryset = CampaignTagLinkage.objects.all()
-            tag_queryset = tag_queryset.filter(tag_name__in=tags)
-            campaign_ids = list(set([int(campaign.campaign_id) for campaign in tag_queryset]))
+            filter_list = []
+            for tag in tags:
+                # Query the campaign tag linkage to get unique campaign id containing the specific tags
+                tag_queryset = CampaignTagLinkage.objects.all()
+                tag_queryset = tag_queryset.filter(tag_name__exact=tag)
+                campaign_ids = list(set([int(campaign.campaign_id) for campaign in tag_queryset]))
+                filter_list.append(campaign_ids)
 
+            result_campadign_ids = set(filter_list[0])
+            if len(filter_list) > 1:
+                for s in filter_list[1:]:
+                    result_campadign_ids.intersection_update(s)
+                    
+            result_campadign_ids = list(result_campadign_ids)
             # Filter campaign by campaign id
-            queryset = queryset.filter(pk__in=campaign_ids)
+            queryset = queryset.filter(pk__in=result_campadign_ids)
 
         # Serialize data
         serializer = self.get_serializer(queryset, many=True)
@@ -262,12 +271,24 @@ class ImageView(viewsets.ModelViewSet):
         tag_names = self.request.query_params.get("tag_names")
         queryset = Image.objects.all()
 
+        # Filter by tag names if tag_names is passed (AND condition)
         if tag_names:
-            tag_names_list = tag_names.split(',')
-            campaign_linkage_query_set = CampaignTagLinkage.objects.all().filter(tag_name__in = tag_names_list)
-            campaign_id_list = list(set([int(campaign.campaign_id) for campaign in campaign_linkage_query_set]))
-            print(campaign_id_list)
-            queryset = queryset.filter(campaign_id__in = campaign_id_list)
+            tags = tag_names.split(',')
+
+            filter_list = []
+            for tag in tags:
+                # Query the campaign tag linkage to get unique campaign id containing the specific tags
+                campaign_linkage_query_set = CampaignTagLinkage.objects.all().filter(tag_name__exact = tag)
+                campaign_id_list = list(set([int(campaign.campaign_id) for campaign in campaign_linkage_query_set]))
+                filter_list.append(campaign_id_list)
+
+            result_campadign_ids = set(filter_list[0])
+            if len(filter_list) > 1:
+                for s in filter_list[1:]:
+                    result_campadign_ids.intersection_update(s)
+            result_campadign_ids = list(result_campadign_ids)
+
+            queryset = queryset.filter(campaign_id__in = result_campadign_ids)
 
         # if image name is passed
         if image_name is not None and image_name != "":
