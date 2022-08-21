@@ -85,7 +85,8 @@ class CampaignView(viewsets.ModelViewSet):
         queryset = Campaign.objects.all()
 
         # Extract the request params
-        tags = self.request.query_params.get("tags")
+        tag_names = self.request.query_params.get("tag_names")
+        company = self.request.query_params.get("company")
         hsbc_vs_non_hsbc = self.request.query_params.get("hsbc_vs_non_hsbc")
         location = self.request.query_params.get("location")
         message_type = self.request.query_params.get("message_type")
@@ -94,18 +95,18 @@ class CampaignView(viewsets.ModelViewSet):
         if hsbc_vs_non_hsbc:
             queryset = queryset.filter(hsbc_vs_non_hsbc__exact=hsbc_vs_non_hsbc)
 
-        # Filtering logic on location (AND condition)
-        if location:
-            queryset = queryset.filter(location__exact=location)
+        # Filtering logic on company (AND condition)
+        if company:
+            queryset = queryset.filter(company__exact=company)
 
         # Filtering logic on message_type (AND condition)
         if message_type:
             queryset = queryset.filter(message_type__exact=message_type)
 
         # Filtering logic on tags (AND condition)
-        if tags is not None and tags != "":
+        if tag_names is not None and tag_names != "":
             # Extract the tags filter
-            tags = tags.split(",")
+            tags = tag_names.split(",")
 
             filter_list = []
             for tag in tags:
