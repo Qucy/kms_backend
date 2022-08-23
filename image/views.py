@@ -12,13 +12,17 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from .serializers import ImageSerializer, TagSerializer, CampaignSerializer,CampaignTagLinkageSerializer
-from .models import Image, Tag, Campaign,CampaignTagLinkage
+from .serializers import (
+    ImageSerializer,
+    TagSerializer,
+    CampaignSerializer,
+    CampaignTagLinkageSerializer,
+)
+from .models import Image, Tag, Campaign, CampaignTagLinkage
 from .utils import expand2square
 
 THUMBNAIL_SIZE = 550, 550
 CAMPAIGN_THUMBNAIL_PATH = "static/thumbnail/"
-
 
 
 class CampaignTagLinkageView(viewsets.ModelViewSet):
@@ -34,7 +38,7 @@ class CampaignTagLinkageView(viewsets.ModelViewSet):
         if tag_name is not None and tag_name != "":
             queryset = queryset.filter(tag_name__contains=tag_name)
 
-        # Filter the campaign with campaign id 
+        # Filter the campaign with campaign id
         if campaign_id is not None and campaign_id != "":
             queryset = queryset.filter(campaign_id__exact=campaign_id)
 
@@ -42,44 +46,54 @@ class CampaignTagLinkageView(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
     def create(self, request, *args, **kwargs):
         tag_names = request.data["tag_names"]
         campaign_id = request.data["campaign_id"]
         creation_datetime = str(datetime.datetime.now())
 
-        for tag_name in tag_names.split(','):
+        for tag_name in tag_names.split(","):
             link = CampaignTagLinkage(
-                campaign_id = campaign_id,
-                tag_name = tag_name,
-                creation_datetime=creation_datetime)
+                campaign_id=campaign_id,
+                tag_name=tag_name,
+                creation_datetime=creation_datetime,
+            )
             link.save()
 
         return Response(
-            {"message": f"campaign_id [{campaign_id}] is linked with tag [{tag_names}]"},
+            {
+                "message": f"campaign_id [{campaign_id}] is linked with tag [{tag_names}]"
+            },
             status=status.HTTP_200_OK,
         )
 
-    @action(methods=['delete'], detail=False)
+    @action(methods=["delete"], detail=False)
     def delete(self, request, *args, **kwargs):
         campaign_id = self.request.query_params.get("campaign_id")
-        count =  CampaignTagLinkage.objects.all().filter(campaign_id = campaign_id).delete()
-        return Response({'message': '{} Links were deleted successfully!'.format(count[0])}, status=status.HTTP_204_NO_CONTENT)
+        count = (
+            CampaignTagLinkage.objects.all().filter(campaign_id=campaign_id).delete()
+        )
+        return Response(
+            {"message": "{} Links were deleted successfully!".format(count[0])},
+            status=status.HTTP_204_NO_CONTENT,
+        )
 
-
-    @action(methods=['patch'], detail=False)
+    @action(methods=["patch"], detail=False)
     def patch(self, request, *args, **kwargs):
         tag_name = request.data["tag_name"]
         new_tag_name = request.data["new_tag_name"]
 
-        tag_links = CampaignTagLinkage.objects.filter(tag_name = tag_name).update(tag_name = new_tag_name)
-        return Response({'message': f'Updated tag {tag_name} to {new_tag_name}'}, status=status.HTTP_200_OK)
+        tag_links = CampaignTagLinkage.objects.filter(tag_name=tag_name).update(
+            tag_name=new_tag_name
+        )
+        return Response(
+            {"message": f"Updated tag {tag_name} to {new_tag_name}"},
+            status=status.HTTP_200_OK,
+        )
 
 
 class CampaignView(viewsets.ModelViewSet):
     serializer_class = CampaignSerializer
     queryset = Campaign.objects.all()
-
 
     def list(self, request, *args, **kwargs):
         queryset = Campaign.objects.all()
@@ -90,7 +104,7 @@ class CampaignView(viewsets.ModelViewSet):
         hsbc_vs_non_hsbc = self.request.query_params.get("hsbc_vs_non_hsbc")
         location = self.request.query_params.get("location")
         message_type = self.request.query_params.get("message_type")
-        
+
         # Filtering logic on hsbc_vs_non_hsbc (AND condition)
         if hsbc_vs_non_hsbc:
             queryset = queryset.filter(hsbc_vs_non_hsbc__exact=hsbc_vs_non_hsbc)
@@ -113,14 +127,16 @@ class CampaignView(viewsets.ModelViewSet):
                 # Query the campaign tag linkage to get unique campaign id containing the specific tags
                 tag_queryset = CampaignTagLinkage.objects.all()
                 tag_queryset = tag_queryset.filter(tag_name__exact=tag)
-                campaign_ids = list(set([int(campaign.campaign_id) for campaign in tag_queryset]))
+                campaign_ids = list(
+                    set([int(campaign.campaign_id) for campaign in tag_queryset])
+                )
                 filter_list.append(campaign_ids)
 
             result_campadign_ids = set(filter_list[0])
             if len(filter_list) > 1:
                 for s in filter_list[1:]:
                     result_campadign_ids.intersection_update(s)
-                    
+
             result_campadign_ids = list(result_campadign_ids)
             # Filter campaign by campaign id
             queryset = queryset.filter(pk__in=result_campadign_ids)
@@ -133,42 +149,45 @@ class CampaignView(viewsets.ModelViewSet):
             image_path = record["campaign_thumbnail_url"]
             img = PILImage.open(image_path)
             buf = io.BytesIO()
-            image_type = image_path.split('.')[1]
+            image_type = image_path.split(".")[1]
 
-            if image_type.lower() in ('jpg', 'jpeg'):
-                img.save(buf, format='JPEG')
-            elif image_type.lower() == 'png':
-                img.save(buf, format='PNG')
+            if image_type.lower() in ("jpg", "jpeg"):
+                img.save(buf, format="JPEG")
+            elif image_type.lower() == "png":
+                img.save(buf, format="PNG")
             else:
-                print(f'Unsupport image type ')
-                
+                print(f"Unsupport image type ")
+
             byte_im = base64.b64encode(buf.getvalue())
             record["img"] = byte_im
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def partial_update(self, request, *args, **kwargs):
-        if 'tag_names' in request.data:
+        if "tag_names" in request.data:
             tag_names = request.data["tag_names"]
             instance = self.get_object()
 
             # Delete CampaignTagLinkage for the campaign id
-            camapign_taglink_queryset = CampaignTagLinkage.objects.all().filter(campaign_id__exact = instance.id)
+            camapign_taglink_queryset = CampaignTagLinkage.objects.all().filter(
+                campaign_id__exact=instance.id
+            )
             camapign_taglink_queryset.delete()
 
             # Generate the new createion_datetime
             creation_datetime = str(datetime.datetime.now())
 
             # Re-create the campaign linkage for campaign id
-            for tag_name in tag_names.split(','):
+            for tag_name in tag_names.split(","):
                 link = CampaignTagLinkage(
-                    campaign_id = instance.id,
-                    tag_name = tag_name,
-                    creation_datetime=creation_datetime)
+                    campaign_id=instance.id,
+                    tag_name=tag_name,
+                    creation_datetime=creation_datetime,
+                )
                 link.save()
 
         return super().partial_update(request, *args, **kwargs)
-        
+
     def create(self, request, *args, **kwargs):
 
         # Extract image payload
@@ -185,12 +204,11 @@ class CampaignView(viewsets.ModelViewSet):
         # Process the image
         image_file_io = io.BytesIO(image.file.read())
         image_file = PILImage.open(image_file_io)
-        image_file = expand2square(image_file, 'white').resize(THUMBNAIL_SIZE)
+        image_file = expand2square(image_file, "white").resize(THUMBNAIL_SIZE)
 
         # Saving image to the static file TODO optimized in future, save in tmp folder before below validation is passed
         image_path = CAMPAIGN_THUMBNAIL_PATH + str(image)
         image_file.save(image_path)
-
 
         campaign = Campaign(
             company=company,
@@ -199,7 +217,7 @@ class CampaignView(viewsets.ModelViewSet):
             message_type=message_type,
             response_rate=response_rate,
             campaign_thumbnail_url=image_path,
-            creation_datetime = creation_datetime
+            creation_datetime=creation_datetime,
         )
 
         campaign.save()
@@ -215,27 +233,31 @@ class CampaignView(viewsets.ModelViewSet):
         os.remove(campaign_thumbnail_file_path)
 
         # Filter out the images related to the campaign
-        image_queryset = Image.objects.all().filter(campaign_id__exact = instance.id)
-        
+        image_queryset = Image.objects.all().filter(campaign_id__exact=instance.id)
+
         # Delete thumbnail image files
         image_file_paths = [image.image_url for image in image_queryset]
         for image_file_path in image_file_paths:
             os.remove(image_file_path)
 
         # Delete thumbnail image files
-        image_thumbnail_file_paths = [image.image_thumbnail_url for image in image_queryset]
+        image_thumbnail_file_paths = [
+            image.image_thumbnail_url for image in image_queryset
+        ]
         for image_thumbnail_file_path in image_thumbnail_file_paths:
             os.remove(image_thumbnail_file_path)
-        
+
         # Delete image queryset
         image_queryset.delete()
 
         # Delete CampaignTagLinkage
-        camapign_taglink_queryset = CampaignTagLinkage.objects.all().filter(campaign_id__exact = instance.id)
+        camapign_taglink_queryset = CampaignTagLinkage.objects.all().filter(
+            campaign_id__exact=instance.id
+        )
         camapign_taglink_queryset.delete()
 
         # Delete Campaign Instance
-        instance.delete()   
+        instance.delete()
 
     # def destroy(self, request, *args, **kwargs):
 
@@ -244,7 +266,7 @@ class CampaignView(viewsets.ModelViewSet):
     #     self.perform_destroy(campaign)
 
     #     print(campaign.id)
-        
+
     #     image_queryset = Image.objects.all().filter(campaign_id__exat = campaign.id)
     #     print(image_queryset)
 
@@ -274,13 +296,22 @@ class ImageView(viewsets.ModelViewSet):
 
         # Filter by tag names if tag_names is passed (AND condition)
         if tag_names:
-            tags = tag_names.split(',')
+            tags = tag_names.split(",")
 
             filter_list = []
             for tag in tags:
                 # Query the campaign tag linkage to get unique campaign id containing the specific tags
-                campaign_linkage_query_set = CampaignTagLinkage.objects.all().filter(tag_name__exact = tag)
-                campaign_id_list = list(set([int(campaign.campaign_id) for campaign in campaign_linkage_query_set]))
+                campaign_linkage_query_set = CampaignTagLinkage.objects.all().filter(
+                    tag_name__exact=tag
+                )
+                campaign_id_list = list(
+                    set(
+                        [
+                            int(campaign.campaign_id)
+                            for campaign in campaign_linkage_query_set
+                        ]
+                    )
+                )
                 filter_list.append(campaign_id_list)
 
             result_campadign_ids = set(filter_list[0])
@@ -289,7 +320,7 @@ class ImageView(viewsets.ModelViewSet):
                     result_campadign_ids.intersection_update(s)
             result_campadign_ids = list(result_campadign_ids)
 
-            queryset = queryset.filter(campaign_id__in = result_campadign_ids)
+            queryset = queryset.filter(campaign_id__in=result_campadign_ids)
 
         # if image name is passed
         if image_name is not None and image_name != "":
@@ -346,14 +377,14 @@ class ImageView(viewsets.ModelViewSet):
         image_file_io = io.BytesIO(image.file.read())
         image_file = PILImage.open(image_file_io)
 
-        # Saving image to the static file 
+        # Saving image to the static file
         image_file.save(image_tmp_path)
 
         # Saving the image meta data
         image_width, image_height = image_file.size
         image_type = str(image).split(".")[-1]
 
-        # Get size of image after saving 
+        # Get size of image after saving
         image_size = str(os.path.getsize(image_tmp_path) / 1024) + " KB"
 
         # Calc image hash
@@ -380,8 +411,10 @@ class ImageView(viewsets.ModelViewSet):
             image_file.save(image_path)
             os.remove(image_tmp_path)
 
-            # image_thumbnail = self._resize_image(image_type, image_path)
-            image_thumbnail_file = expand2square(image_file, 'white').resize(THUMBNAIL_SIZE)
+            # generate thumbnail file
+            image_thumbnail_file = expand2square(image_file, "white").resize(
+                THUMBNAIL_SIZE
+            )
 
             # Saving image once all validation is done
             image_thumbnail_file.save(image_thumbnail_path)
@@ -452,27 +485,6 @@ class ImageView(viewsets.ModelViewSet):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
 
-    def _resize_image(self, image_type, image_path):
-        """resize image based on previous image size
-        and encoded base64 for input image
-        """
-        # load image
-        img = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-        # scale down image
-        scale_percent = 10  # percent of original size
-        width = int(img.shape[1] * scale_percent / 100)
-        height = int(img.shape[0] * scale_percent / 100)
-        dim = (width, height)
-        # resize image
-        resized_image = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
-        # get encode type
-        encode_type = ".jpg" if image_type.lower() in ["jpg", "jpeg"] else ".png"
-        # encode image
-        encoded_image = cv2.imencode(encode_type, resized_image)[1]
-        # encode image to base64
-        encoded_image_base64 = str(base64.b64encode(encoded_image))[2:-1]
-        return encoded_image_base64
-
 
 class TagView(viewsets.ModelViewSet):
     """View for image tag module"""
@@ -493,7 +505,7 @@ class TagView(viewsets.ModelViewSet):
 
         # if tag categroy is passed
         if tag_category is not None and tag_category != "":
-            queryset = queryset.filter(tag_category__contains=tag_category)        
+            queryset = queryset.filter(tag_category__contains=tag_category)
 
         # pagnation
         page = self.paginate_queryset(queryset)
