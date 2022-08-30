@@ -259,6 +259,126 @@ class CampaignView(viewsets.ModelViewSet):
         # Delete Campaign Instance
         instance.delete()
 
+    @action(detail=False, methods=["patch"], name="update campaign status")
+    def updateStatus(self, request):
+        """api to approve new created campaign"""
+        # Extract PK
+        campaign_id = request.data["id"]
+        campaign_status = request.data["status"]
+        # sanity check before update
+        if campaign_id is None:
+            return Response(
+                {"message": f"Campaign id can not be empty."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if campaign_status is None or campaign_status == "":
+            return Response(
+                {"message": f"Campaign status can not be empty."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        elif campaign_status not in ["APPROVED", "NEW"]:
+            return Response(
+                {"message": f"Campaign status can only be APPROVED or NEW."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # Retrieve campaign entity before update
+        campaigns = Campaign.objects.all().filter(id=campaign_id)
+        if campaigns is not None and len(campaigns) == 1:
+            # check current campaign status
+            if campaigns[0].status != "PENDING":
+                return Response(
+                    {
+                        "message": f"Campaign already approved or reject by other people."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                # Update campaign status
+                campaigns.update(
+                    status=campaign_status,
+                )
+                return Response(
+                    {
+                        "message": f"Campaign status updated to {campaign_status} successfully."
+                    },
+                    status=status.HTTP_200_OK,
+                )
+        else:
+            return Response(
+                {"message": f"Campaign is not exist any more."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=False, methods=["get"], name="campaign paginated query")
+    def pagination(self, request, *args, **kwargs):
+        """paginated query"""
+        # TODO to be merged with list function if list function don't needed anymore
+        queryset = Campaign.objects.all().order_by("creation_datetime")
+        # Extract the request params
+        tag_names = self.request.query_params.get("tag_names")
+        company = self.request.query_params.get("company")
+        hsbc_vs_non_hsbc = self.request.query_params.get("hsbc_vs_non_hsbc")
+        message_type = self.request.query_params.get("message_type")
+
+        # Filtering logic on hsbc_vs_non_hsbc (AND condition)
+        if hsbc_vs_non_hsbc:
+            queryset = queryset.filter(hsbc_vs_non_hsbc__exact=hsbc_vs_non_hsbc)
+
+        # Filtering logic on company (AND condition)
+        if company:
+            queryset = queryset.filter(company__exact=company)
+
+        # Filtering logic on message_type (AND condition)
+        if message_type:
+            queryset = queryset.filter(message_type__exact=message_type)
+
+        # Filtering logic on tags (AND condition)
+        if tag_names is not None and tag_names != "":
+            # Extract the tags filter
+            tags = tag_names.split(",")
+
+            filter_list = []
+            for tag in tags:
+                # Query the campaign tag linkage to get unique campaign id containing the specific tags
+                tag_queryset = CampaignTagLinkage.objects.all()
+                tag_queryset = tag_queryset.filter(tag_name__exact=tag)
+                campaign_ids = list(
+                    set([int(campaign.campaign_id) for campaign in tag_queryset])
+                )
+                filter_list.append(campaign_ids)
+
+            result_campadign_ids = set(filter_list[0])
+            if len(filter_list) > 1:
+                for s in filter_list[1:]:
+                    result_campadign_ids.intersection_update(s)
+
+            result_campadign_ids = list(result_campadign_ids)
+            # Filter campaign by campaign id
+            queryset = queryset.filter(pk__in=result_campadign_ids)
+
+        # pagnation
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+
+        # Converting the image path into images
+        for record in serializer.data:
+            image_path = record["campaign_thumbnail_url"]
+            img = PILImage.open(image_path)
+            buf = io.BytesIO()
+            image_type = image_path.split(".")[1]
+
+            if image_type.lower() in ("jpg", "jpeg"):
+                img.save(buf, format="JPEG")
+            elif image_type.lower() == "png":
+                img.save(buf, format="PNG")
+            else:
+                print(f"Unsupport image type ")
+
+            byte_im = base64.b64encode(buf.getvalue())
+            record["img"] = byte_im
+
+        return self.get_paginated_response(serializer.data)
+
     # def destroy(self, request, *args, **kwargs):
 
     #     # delete campaign
