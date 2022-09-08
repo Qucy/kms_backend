@@ -197,6 +197,7 @@ class CampaignView(viewsets.ModelViewSet):
         response_rate = request.data["response_rate"]
         message_type = request.data["message_type"]
         image = request.data["file"]
+        create_by = request.data["create_by"]
 
         # Calcualte the current datetime
         creation_datetime = str(datetime.datetime.now())
@@ -218,6 +219,7 @@ class CampaignView(viewsets.ModelViewSet):
             response_rate=response_rate,
             campaign_thumbnail_url=image_path,
             creation_datetime=creation_datetime,
+            create_by=create_by,
         )
 
         campaign.save()
@@ -487,6 +489,7 @@ class ImageView(viewsets.ModelViewSet):
         image_name = request.data["image_name"]
         create_by = request.data["create_by"]
         campaign_id = request.data["campaign_id"]
+        creation_datetime = str(datetime.datetime.now())
 
         # Define the path to save images and thumbnail
         image_tmp_path = "static/" + str(image)
@@ -550,6 +553,7 @@ class ImageView(viewsets.ModelViewSet):
                 campaign_id=campaign_id,
                 image_thumbnail_url=image_thumbnail_path,
                 create_by=create_by,
+                creation_datetime=creation_datetime,
             )
             image.save()
             return Response(
